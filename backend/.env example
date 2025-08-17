@@ -1,0 +1,3 @@
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/taskdb?schema=public"
+JWT_SECRET="6c0906ff097c88f0a90b822a8ad1d1ed"
+PORT=5000
