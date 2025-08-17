@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [taskDetailModal, showDetails] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -28,6 +29,7 @@ export default function Dashboard() {
   // form state (modal içinde kullanacağız)
   const [fTitle, setFTitle] = useState("");
   const [fDesc, setFDesc] = useState("");
+  const [selectedTaskDesc, setSelectedTaskDesc] = useState<string | null>(null);
   const [fStatus, setFStatus] = useState<"pending" | "completed">("pending");
   const [fUserId, setFUserId] = useState<number | "">("");
 
@@ -43,7 +45,7 @@ export default function Dashboard() {
       minute: "2-digit",
     });
 
-  const welcome = useMemo(() => `Welcome ${username}`, [username]);
+  const welcome = useMemo(() => `${username}`, [username]);
 
   async function fetchTasks() {
     setLoading(true);
@@ -137,24 +139,24 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
-      <div className="w-full bg-white border-b shadow-sm">
+      <div className="w-full bg-white border-b shadow-sm p-[0_12px]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="font-semibold">MEA-TEC Task Management Portal</div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-700">{welcome}</span>
+            Welcome&nbsp;<span style={{fontWeight: "600" }} className="text-sm font-bold text-gray-700">{welcome}</span>
             <button
               onClick={() => setShowLogoutConfirm(true)}
               title="Logout"
-              className="rounded-lg border px-3 py-1 hover:bg-gray-100"
+              className="rounded-lg border px-3 m-[6px_12px] py-1 hover:bg-gray-100"
             >
-              ⎋ Logout
+              Logout
             </button>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto p-4">
+      <div className="max-w-6xl mx-auto p-[0_24px]">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Tasks</h2>
           <button
@@ -225,10 +227,16 @@ export default function Dashboard() {
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(t.id)}
-                          className="px-2 py-1 rounded border text-red-600 hover:bg-red-50"
+                          className="px-2 py-1 ml-[12px] rounded border text-red-600 hover:bg-red-50"
                         >
                           Delete
                         </button>
+                       <button
+                        onClick={() => setSelectedTaskDesc(t.description ?? "(No description)")}
+                        className="px-2 py-1 ml-[12px] rounded border text-red-600 hover:bg-red-50"
+                      >
+                        Details
+                      </button>
                       </div>
                     </td>
                   </tr>
@@ -241,25 +249,29 @@ export default function Dashboard() {
 
       {/* Task Modal */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-5">
+  <div className="fixed modal rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.15)] inset-0 z-50 flex items-center justify-center">
+    {/* overlay */}
+    <div className="absolute inset-0 bg-black/40"></div>
+
+    {/* modal content */}
+    <div className="relative z-50 bg-white w-full max-w-md rounded-2xl shadow-xl p-3">
             <h3 className="text-lg font-semibold mb-4">
               {editingTask ? "Edit Task" : "Add New Task"}
             </h3>
             <form onSubmit={saveTask} className="space-y-3">
               <div>
-                <label className="block text-sm mb-1">Başlık</label>
+                <label className="block text-sm mb-1">Title</label>
                 <input
-                  className="w-full border rounded-md px-3 py-2"
+                  className="w-full p-[12px] border rounded-md px-3 py-2"
                   value={fTitle}
                   onChange={(e) => setFTitle(e.target.value)}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Açıklama</label>
+                <label className="block text-sm mb-1 mt-[12px]">Description</label>
                 <textarea
-                  className="w-full border rounded-md px-3 py-2"
+                  className="w-full p-[12px] border rounded-md px-3 py-2"
                   rows={4}
                   value={fDesc}
                   onChange={(e) => setFDesc(e.target.value)}
@@ -267,10 +279,10 @@ export default function Dashboard() {
                 />
               </div>
               <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="block text-sm mb-1">Durum</label>
+                <div className="flex-1 pr-[6px]">
+                  <label className="block text-sm mb-1 mt-[12px]">Status</label>
                   <select
-                    className="w-full border rounded-md px-3 py-2"
+                    className="w-full p-[8px] border rounded-md px-3 py-2"
                     value={fStatus}
                     onChange={(e) =>
                       setFStatus(e.target.value as "pending" | "completed")
@@ -281,16 +293,16 @@ export default function Dashboard() {
                     <option value="completed">completed</option>
                   </select>
                 </div>
-                <div className="flex-1">
-                  <label className="block text-sm mb-1">Kullanıcı</label>
+                <div className="flex-1 pl-[6px]">
+                  <label className="block text-sm mb-1 mt-[12px]">User</label>
                   <select
-                    className="w-full border rounded-md px-3 py-2"
+                    className="w-full p-[8px] border rounded-md px-3 py-2"
                     value={fUserId}
                     onChange={(e) => setFUserId(Number(e.target.value))}
                     required
                   >
                     <option value="" disabled>
-                      Seçiniz
+                      Choose
                     </option>
                     {users
                       .slice()
@@ -306,7 +318,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-around gap-2 mt-[24px] text-center">
                 <button
                   type="button"
                   onClick={closeTaskModal}
@@ -328,7 +340,7 @@ export default function Dashboard() {
 
       {/* Delete confirm */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.15)] p-[24px] modal inset-0 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5">
             <h3 className="text-lg font-semibold mb-2">Are you sure?</h3>
             <p className="text-sm text-gray-600 mb-4">
@@ -354,7 +366,7 @@ export default function Dashboard() {
 
       {/* Logout confirm */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed modal rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.15)] p-[24px] inset-0 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5">
             <h3 className="text-lg font-semibold mb-2">Logout</h3>
             <p className="text-sm text-gray-600 mb-4">
@@ -372,6 +384,25 @@ export default function Dashboard() {
                 className="px-3 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
               >
                 Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )} 
+      {/* Description & Details modal */}
+      {selectedTaskDesc !== null && (
+        <div className="fixed modal rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.15)] p-[24px] inset-0 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5">
+            <h3 className="text-lg font-semibold mb-2">Task Description</h3>
+            <p className="text-sm text-gray-600 mb-4 whitespace-pre-wrap">
+              {selectedTaskDesc}
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setSelectedTaskDesc(null)}
+                className="px-3 py-2 rounded-md border hover:bg-gray-100"
+              >
+                Close
               </button>
             </div>
           </div>
