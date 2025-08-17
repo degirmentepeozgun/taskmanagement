@@ -104,6 +104,21 @@ table thead {
 table tr:nth-child(2n) {
   background-color: #00000005;
 }
+table tr:nth-child(2n) button{
+  background-color: #fff;
+}
 table td, table th {
   padding: 2px 10px;
+}
+table button {
+  padding-top:4px !important;
+  padding-bottom: 4px !important;
+  margin:6px 0
+}
+body:has(.modal) * {
+  pointer-events: none;
+  user-select: none;
+}
+.modal * {
+  pointer-events: auto !important
 }
