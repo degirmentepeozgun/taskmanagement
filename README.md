@@ -24,3 +24,7 @@ Username = testuser
 Password = test1234
 
 Only Admin role can create and delete task. Rest of users can only see the tasks of themselves.
+
+KEY POINT!!!
+
+User Role can only edit the status and description of tasks and even you try to request api without frontend to hack the fields api route is letting you update only fields that you have permission.
