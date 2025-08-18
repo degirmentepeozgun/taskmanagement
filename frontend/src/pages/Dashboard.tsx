@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null); // ✅ description yerine komple task
 
   const username = localStorage.getItem("username") || "User";
+  const role = localStorage.getItem("role") || "User";
   const selfUserId = Number(localStorage.getItem("userId") || 0);
 
   const niceDate = (iso?: string | null) => {
@@ -179,12 +180,14 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Tasks</h2>
-          <button
-            onClick={openAddModal}
-            className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
-          >
-            + Add New Task
-          </button>
+            {role !== "User" && (
+              <button
+                onClick={openAddModal}
+                className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
+              >
+                + Add New Task
+              </button>
+            )}
         </div>
 
         {/* Table */}
@@ -247,12 +250,14 @@ export default function Dashboard() {
                         >
                           Edit
                         </button>
+                        {role !== "User" && (
                         <button
                           onClick={() => setConfirmDeleteId(t.id)}
                           className="px-2 py-1 ml-[12px] rounded border text-red-600 hover:bg-red-50"
                         >
                           Delete
                         </button>
+                        )}
                         <button
                           onClick={() => { setSelectedTask(t); setTaskDetailModal(true); }}
                           className="px-2 py-1 ml-[12px] rounded border hover:bg-gray-100"

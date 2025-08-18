@@ -13,9 +13,13 @@ model User {
   username     String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
+  role         Role   @default(User)
   tasks        Task[]
 }
-
+enum Role {
+  Admin
+  User
+}
 model Task {
   id          Int      @id @default(autoincrement())
   title       String
