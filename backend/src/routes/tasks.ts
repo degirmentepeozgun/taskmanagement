@@ -61,13 +61,21 @@ router.put("/:id", async (req: AuthRequest, res) => {
     return res.status(403).json({ message: "Not authorized to update this task." });
   }
 
+  const dataToUpdate = isAdmin
+    ? parse.data
+    : {
+        ...(typeof parse.data.description !== "undefined" && { description: parse.data.description }),
+        ...(typeof parse.data.status !== "undefined" && { status: parse.data.status }),
+      };
+
   const updated = await prisma.task.update({
     where: { id },
-    data: parse.data,
+    data: dataToUpdate,
   });
 
   res.json(updated);
 });
+
 
 router.delete("/:id", async (req: AuthRequest, res) => {
   const id = Number(req.params.id);
