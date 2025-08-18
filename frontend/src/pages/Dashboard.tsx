@@ -133,11 +133,11 @@ export default function Dashboard() {
       dueDate: fDueDate ? new Date(fDueDate).toISOString() : null, // ✅ BE'ye ISO gönder
     };
 
-    if (editingTask) {
-      await api.put(`/tasks/${editingTask.id}`, payload);
-    } else {
-      await api.post("/tasks", payload);
-    }
+   console.log("Sending payload:", payload);
+const response = editingTask
+  ? await api.put(`/tasks/${editingTask.id}`, payload)
+  : await api.post("/tasks", payload);
+console.log("Response:", response.data);
 
     await fetchTasks();
     setShowTaskModal(false);
