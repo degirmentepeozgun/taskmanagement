@@ -286,6 +286,7 @@ console.log("Response:", response.data);
               {editingTask ? "Edit Task" : "Add New Task"}
             </h3>
             <form onSubmit={saveTask} className="space-y-3">
+               {role !== "User" && (
               <div>
                 <label className="block text-sm mb-1">Title</label>
                 <input
@@ -295,6 +296,7 @@ console.log("Response:", response.data);
                   required
                 />
               </div>
+               )}
               <div>
                 <label className="block text-sm mb-1 mt-[12px]">Description</label>
                 <textarea
@@ -305,7 +307,7 @@ console.log("Response:", response.data);
                   required
                 />
               </div>
-
+            {role !== "User" && (
               <div>
                 <label className="block text-sm mb-1 mt-[12px]">Due Date</label>
                 <input
@@ -315,6 +317,7 @@ console.log("Response:", response.data);
                   onChange={(e) => setFDueDate(e.target.value)}
                 />
               </div>
+            )}
 
               <div className="flex gap-3">
                 <div className="flex-1">
@@ -331,6 +334,7 @@ console.log("Response:", response.data);
                     <option value="completed">completed</option>
                   </select>
                 </div>
+                {role !== "User" && (
                 <div className="flex-1">
                   <label className="block text-sm mb-1 mt-[12px]">User</label>
                   <select
@@ -354,6 +358,7 @@ console.log("Response:", response.data);
                       ))}
                   </select>
                 </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-5">
