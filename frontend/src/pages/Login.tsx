@@ -5,15 +5,23 @@ import api from "../api/axios";
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); // Hata mesajı için
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await api.post("/auth/login", { username, password });
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("userId", String(res.data.user.id));
-    localStorage.setItem("username", res.data.user.username);
-    navigate("/dashboard");
+    setError(""); // Önce hata mesajını temizle
+
+    try {
+      const res = await api.post("/auth/login", { username, password });
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userId", String(res.data.user.id));
+      localStorage.setItem("username", res.data.user.username);
+      navigate("/dashboard");
+    } catch (err) {
+      // Hata varsa mesaj göster
+      setError("Username or Password is incorrect");
+    }
   };
 
   return (
@@ -30,6 +38,17 @@ function Login() {
         >
           Log In
         </div>
+
+        {/* Hata mesajı burada */}
+        {error && (
+          <div
+            className="mb-4 text-red-600 text-center font-semibold"
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <input
             type="text"
@@ -54,12 +73,13 @@ function Login() {
           >
             Login
           </button>
-          <a href="./Register"
-          className="w-full pb-6 mt-[24px] text-center"
-          style={{ fontSize: "16px" }}
-        >
-          Create New Account
-        </a>
+          <a
+            href="./Register"
+            className="w-full pb-6 mt-[24px] text-center"
+            style={{ fontSize: "16px" }}
+          >
+            Create New Account
+          </a>
         </form>
       </div>
     </div>

@@ -14,7 +14,15 @@ router.get("/", async (req: AuthRequest, res) => {
     include: { user: { select: { username: true } } },
     orderBy: { createdAt: "desc" },
   });
-  res.json(tasks);
+  const now = new Date();
+const enrichedTasks = tasks.map(t => {
+  if (t.dueDate && t.dueDate < now && t.status !== "completed") {
+    return { ...t, status: "expired" };
+  }
+  return t;
+});
+
+res.json(enrichedTasks);
 });
 
 // POST /api/tasks

@@ -5,11 +5,12 @@ type Task = {
   id: number;
   title: string;
   description?: string | null;
-  status: "pending" | "completed";
+  status: "pending" | "completed" | "expired"; // ✅ expired eklendi
   userId: number;
   createdAt: string;
   updatedAt: string;
-  user?: { username: string }; // backend include ile gelebilir
+  dueDate?: string | null; // ✅ yeni alan
+  user?: { username: string };
 };
 
 type User = { id: number; username: string };
@@ -20,37 +21,55 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const [showTaskModal, setShowTaskModal] = useState(false);
-  const [taskDetailModal, showDetails] = useState(false);
+  const [taskDetailModal, setTaskDetailModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // form state (modal içinde kullanacağız)
+  // form state
   const [fTitle, setFTitle] = useState("");
   const [fDesc, setFDesc] = useState("");
-  const [selectedTaskDesc, setSelectedTaskDesc] = useState<string | null>(null);
   const [fStatus, setFStatus] = useState<"pending" | "completed">("pending");
   const [fUserId, setFUserId] = useState<number | "">("");
+  const [fDueDate, setFDueDate] = useState<string>(""); // ✅ yeni alan (datetime-local string)
+
+  // details için seçili task
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null); // ✅ description yerine komple task
 
   const username = localStorage.getItem("username") || "User";
   const selfUserId = Number(localStorage.getItem("userId") || 0);
 
-  const niceDate = (iso: string) =>
-    new Date(iso).toLocaleString(undefined, {
+  const niceDate = (iso?: string | null) => {
+    if (!iso) return "-";
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // ISO -> <input type="datetime-local"> değeri (YYYY-MM-DDTHH:mm)
+  const isoToLocalInput = (iso?: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  };
 
   const welcome = useMemo(() => `${username}`, [username]);
 
   async function fetchTasks() {
     setLoading(true);
     try {
-      // BE tarafında include user ekli ise username gelir; yoksa userId göstereceğiz
       const { data } = await api.get<Task[]>("/tasks");
       setTasks(data);
     } finally {
@@ -60,11 +79,9 @@ export default function Dashboard() {
 
   async function fetchUsers() {
     try {
-      // BE tarafında bu endpoint yoksa ekleyebilirsin: GET /api/auth/users -> [{id, username}]
       const { data } = await api.get<User[]>("/auth/users");
       setUsers(data);
     } catch {
-      // endpoint yoksa en azından kendini seçilebilir yap
       if (selfUserId && username) {
         setUsers([{ id: selfUserId, username }]);
       }
@@ -82,6 +99,7 @@ export default function Dashboard() {
     setFDesc("");
     setFStatus("pending");
     setFUserId(selfUserId || "");
+    setFDueDate(""); // ✅ yeni
     setShowTaskModal(true);
   }
 
@@ -89,8 +107,9 @@ export default function Dashboard() {
     setEditingTask(t);
     setFTitle(t.title);
     setFDesc(t.description ?? "");
-    setFStatus(t.status);
+    setFStatus(t.status === "completed" ? "completed" : "pending"); // expired'ı burada manuel seçtirmiyoruz
     setFUserId(t.userId);
+    setFDueDate(isoToLocalInput(t.dueDate)); // ✅ mevcut dueDate'i forma taşı
     setShowTaskModal(true);
   }
 
@@ -110,6 +129,7 @@ export default function Dashboard() {
       description: fDesc.trim(),
       status: fStatus,
       userId: Number(fUserId),
+      dueDate: fDueDate ? new Date(fDueDate).toISOString() : null, // ✅ BE'ye ISO gönder
     };
 
     if (editingTask) {
@@ -133,7 +153,7 @@ export default function Dashboard() {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     localStorage.removeItem("userId");
-    window.location.href = "/login"; // router yoksa böyle
+    window.location.href = "/login";
   }
 
   return (
@@ -143,7 +163,7 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="font-semibold">MEA-TEC Task Management Portal</div>
           <div className="flex items-center gap-4">
-            Welcome&nbsp;<span style={{fontWeight: "600" }} className="text-sm font-bold text-gray-700">{welcome}</span>
+            Welcome&nbsp;<span style={{ fontWeight: "600" }} className="text-sm font-bold text-gray-700">{welcome}</span>
             <button
               onClick={() => setShowLogoutConfirm(true)}
               title="Logout"
@@ -156,7 +176,7 @@ export default function Dashboard() {
       </div>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto p-[0_24px]">
+      <div className="max-w-6xl mx-auto p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Tasks</h2>
           <button
@@ -207,6 +227,8 @@ export default function Dashboard() {
                           "px-2 py-1 rounded text-xs " +
                           (t.status === "completed"
                             ? "bg-green-100 text-green-700"
+                            : t.status === "expired"
+                            ? "bg-red-100 text-red-700"
                             : "bg-yellow-100 text-yellow-700")
                         }
                       >
@@ -231,12 +253,12 @@ export default function Dashboard() {
                         >
                           Delete
                         </button>
-                       <button
-                        onClick={() => setSelectedTaskDesc(t.description ?? "(No description)")}
-                        className="px-2 py-1 ml-[12px] rounded border text-red-600 hover:bg-red-50"
-                      >
-                        Details
-                      </button>
+                        <button
+                          onClick={() => { setSelectedTask(t); setTaskDetailModal(true); }}
+                          className="px-2 py-1 ml-[12px] rounded border hover:bg-gray-100"
+                        >
+                          Details
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -249,12 +271,12 @@ export default function Dashboard() {
 
       {/* Task Modal */}
       {showTaskModal && (
-  <div className="fixed modal rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.15)] inset-0 z-50 flex items-center justify-center">
-    {/* overlay */}
-    <div className="absolute inset-0 bg-black/40"></div>
+        <div className="fixed p-4 rounded inset-0 z-50 flex items-center justify-center">
+          {/* overlay */}
+          <div className="absolute inset-0 bg-black/40"></div>
 
-    {/* modal content */}
-    <div className="relative z-50 bg-white w-full max-w-md rounded-2xl shadow-xl p-3">
+          {/* modal content */}
+          <div className="relative z-50 bg-white w-full max-w-md rounded-2xl shadow-xl p-5">
             <h3 className="text-lg font-semibold mb-4">
               {editingTask ? "Edit Task" : "Add New Task"}
             </h3>
@@ -278,6 +300,17 @@ export default function Dashboard() {
                   required
                 />
               </div>
+
+              <div>
+                <label className="block text-sm mb-1 mt-[12px]">Due Date</label>
+                <input
+                  type="datetime-local"
+                  className="w-full p-[12px] border rounded-md px-3 py-2"
+                  value={fDueDate}
+                  onChange={(e) => setFDueDate(e.target.value)}
+                />
+              </div>
+
               <div className="flex gap-3">
                 <div className="flex-1 pr-[6px]">
                   <label className="block text-sm mb-1 mt-[12px]">Status</label>
@@ -340,7 +373,7 @@ export default function Dashboard() {
 
       {/* Delete confirm */}
       {confirmDeleteId && (
-        <div className="fixed rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.15)] p-[24px] modal inset-0 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed rounded inset-0 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5">
             <h3 className="text-lg font-semibold mb-2">Are you sure?</h3>
             <p className="text-sm text-gray-600 mb-4">
@@ -366,7 +399,7 @@ export default function Dashboard() {
 
       {/* Logout confirm */}
       {showLogoutConfirm && (
-        <div className="fixed modal rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.15)] p-[24px] inset-0 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed rounded inset-0 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5">
             <h3 className="text-lg font-semibold mb-2">Logout</h3>
             <p className="text-sm text-gray-600 mb-4">
@@ -388,18 +421,39 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      )} 
-      {/* Description & Details modal */}
-      {selectedTaskDesc !== null && (
-        <div className="fixed modal rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,.15)] p-[24px] inset-0 bg-black/40 flex items-center justify-center p-4">
+      )}
+
+      {/* Details modal */}
+      {taskDetailModal && selectedTask && (
+        <div className="fixed rounded inset-0 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl p-5">
-            <h3 className="text-lg font-semibold mb-2">Task Description</h3>
-            <p className="text-sm text-gray-600 mb-4 whitespace-pre-wrap">
-              {selectedTaskDesc}
-            </p>
-            <div className="flex justify-end">
+            <h3 className="text-lg font-semibold mb-2">Task Details</h3>
+
+            <div className="space-y-2 text-sm text-gray-700">
+              <p><span className="font-medium">Title:</span> {selectedTask.title}</p>
+              <p className="whitespace-pre-wrap">
+                <span className="font-medium">Description:</span> {selectedTask.description ?? "(No description)"}
+              </p>
+              {/* ✅ İstenen satır */}
+              <p><span className="font-medium">Due Date:</span> {selectedTask.dueDate ? niceDate(selectedTask.dueDate) : "-"}</p>
+              <p>
+                <span className="font-medium">Status:</span>{" "}
+                <span className={
+                  "px-2 py-1 rounded text-xs " +
+                  (selectedTask.status === "completed"
+                    ? "bg-green-100 text-green-700"
+                    : selectedTask.status === "expired"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-yellow-100 text-yellow-700")
+                }>
+                  {selectedTask.status}
+                </span>
+              </p>
+            </div>
+
+            <div className="flex justify-end mt-4">
               <button
-                onClick={() => setSelectedTaskDesc(null)}
+                onClick={() => { setTaskDetailModal(false); setSelectedTask(null); }}
                 className="px-3 py-2 rounded-md border hover:bg-gray-100"
               >
                 Close
