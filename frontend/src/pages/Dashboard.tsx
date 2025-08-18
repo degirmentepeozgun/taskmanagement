@@ -317,7 +317,7 @@ console.log("Response:", response.data);
               </div>
 
               <div className="flex gap-3">
-                <div className="flex-1 pr-[6px]">
+                <div className="flex-1">
                   <label className="block text-sm mb-1 mt-[12px]">Status</label>
                   <select
                     className="w-full p-[8px] border rounded-md px-3 py-2"
@@ -331,7 +331,7 @@ console.log("Response:", response.data);
                     <option value="completed">completed</option>
                   </select>
                 </div>
-                <div className="flex-1 pl-[6px]">
+                <div className="flex-1">
                   <label className="block text-sm mb-1 mt-[12px]">User</label>
                   <select
                     className="w-full p-[8px] border rounded-md px-3 py-2"
@@ -356,7 +356,7 @@ console.log("Response:", response.data);
                 </div>
               </div>
 
-              <div className="flex justify-around gap-2 mt-[24px] text-center">
+              <div className="flex justify-end gap-2 pt-5">
                 <button
                   type="button"
                   onClick={closeTaskModal}
@@ -439,7 +439,7 @@ console.log("Response:", response.data);
               <p className="whitespace-pre-wrap">
                 <span className="font-medium">Description:</span> {selectedTask.description ?? "(No description)"}
               </p>
-              {/* ✅ İstenen satır */}
+            
               <p><span className="font-medium">Due Date:</span> {selectedTask.dueDate ? niceDate(selectedTask.dueDate) : "-"}</p>
               <p>
                 <span className="font-medium">Status:</span>{" "}
